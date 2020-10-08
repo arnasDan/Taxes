@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
 using AutoMapper;
 using Microsoft.EntityFrameworkCore;
@@ -28,18 +29,25 @@ namespace Taxes.Core.Repositories.Taxes
             return entity;
         }
 
-        protected override async Task Validate(Tax entity)
+        protected override async Task Validate(Tax entity, CancellationToken cancellationToken)
         {
-            if (!await DatabaseContext.Taxes.AnyAsync(t => t.MunicipalityId == entity.MunicipalityId))
-                throw new DomainException(DomainExceptionType.NotFound,
-                    $"Municipality {entity.MunicipalityId} does not exist");
-        }
+            if (!await DatabaseContext.Municipalities.AnyAsync(t => t.Id == entity.MunicipalityId, cancellationToken))
+                throw new DomainException(DomainExceptionType.ValidationError,  $"Municipality {entity.MunicipalityId} does not exist");
 
-        public async Task<IEnumerable<TaxReadModel>> GetByMunicipalityId(Guid municipalityId)
+            if (await DatabaseContext.Taxes.AnyAsync(t => t.Id != entity.Id &&
+                                                          t.PeriodStartDate == entity.PeriodStartDate &&
+                                                          t.PeriodEndDate == entity.PeriodEndDate &&
+                                                          t.MunicipalityId == entity.MunicipalityId, cancellationToken))
+            {
+                throw new DomainException(DomainExceptionType.AlreadyExists, "Tax with same period already exists for this municipality");
+            }
+    }
+
+        public async Task<IEnumerable<TaxReadModel>> GetByMunicipalityId(Guid municipalityId, CancellationToken cancellationToken)
         {
             return (await DatabaseContext.Taxes
                 .Where(t => t.MunicipalityId == municipalityId)
-                .ToListAsync())
+                .ToListAsync(cancellationToken))
                 .Select(ConvertToReadModel);
         }
     }

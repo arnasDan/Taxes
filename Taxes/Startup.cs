@@ -6,6 +6,10 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Taxes.Core.Mappers;
+using Taxes.Core.Repositories.Municipalities;
+using Taxes.Core.Repositories.Taxes;
+using Taxes.Core.Services.Municipalities;
+using Taxes.Core.Services.Taxes;
 using Taxes.Storage;
 using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
@@ -26,7 +30,15 @@ namespace Taxes.Api
             ConfigureStorage(services);
             ConfigureMappers(services);
 
-            services.AddControllers();
+            services.AddControllers().AddNewtonsoftJson(c => c.SerializerSettings.DateFormatString = "yyyy-MM-dd");
+
+            services.AddSwaggerGen();
+
+            services.AddScoped<ITaxRepository, TaxRepository>();
+            services.AddScoped<IMunicipalityRepository, MunicipalityRepository>();
+
+            services.AddScoped<IMunicipalityService, MunicipalityService>();
+            services.AddScoped<ITaxService, TaxService>();
         }
 
         private void ConfigureStorage(IServiceCollection services)
@@ -57,10 +69,10 @@ namespace Taxes.Api
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
-            if (env.IsDevelopment())
-            {
-                app.UseDeveloperExceptionPage();
-            }
+            app.UseMiddleware<ExceptionHandlingMiddleware>();
+
+            app.UseSwagger();
+            app.UseSwaggerUI(c => c.SwaggerEndpoint("v1/swagger.json", "MunicipalityTaxes API"));
 
             app.UseRouting();
 

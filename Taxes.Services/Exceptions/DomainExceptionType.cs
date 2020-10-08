@@ -2,9 +2,9 @@
 {
     public enum DomainExceptionType
     {
+        ValidationError,
         NotFound,
         InvalidDate,
-        AlreadyExists,
-        ChangingMunicipalityNotAllowed
+        AlreadyExists
     }
 }

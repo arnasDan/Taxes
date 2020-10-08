@@ -10,6 +10,6 @@ namespace Taxes.Storage
         DbSet<Tax> Taxes { get; set; }
         DbSet<Municipality> Municipalities { get; set; }
         DbSet<T> Set<T>() where T : class;
-        Task SaveChangesAsync(CancellationToken cancellation = default);
+        Task<int> SaveChangesAsync(CancellationToken cancellationToken = default);
     }
 }
