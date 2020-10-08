@@ -1,9 +1,11 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using System.Threading;
+using System.Threading.Tasks;
+using Microsoft.EntityFrameworkCore;
 using Taxes.Storage.Entities;
 
 namespace Taxes.Storage
 {
-    public class DatabaseContext : DbContext
+    public class DatabaseContext : DbContext, IDatabaseContext
     {
         public DbSet<Tax> Taxes { get; set; }
         public DbSet<Municipality> Municipalities { get; set; }

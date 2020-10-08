@@ -1,11 +1,13 @@
 using System;
+using AutoMapper;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Taxes.Core.Mappers;
 using Taxes.Storage;
+using IConfiguration = Microsoft.Extensions.Configuration.IConfiguration;
 
 namespace Taxes.Api
 {
@@ -21,20 +23,35 @@ namespace Taxes.Api
         // This method gets called by the runtime. Use this method to add services to the container.
         public void ConfigureServices(IServiceCollection services)
         {
+            ConfigureStorage(services);
+            ConfigureMappers(services);
+
+            services.AddControllers();
+        }
+
+        private void ConfigureStorage(IServiceCollection services)
+        {
             var connectionString = Configuration.GetSection("DatabaseConnectionString").Value;
 
             if (string.IsNullOrWhiteSpace(connectionString))
-            {
                 throw new ArgumentNullException(nameof(connectionString), "DatabaseConnectionString not found");
-            }
 
-            services.AddDbContext<DatabaseContext>(options =>
+            services.AddDbContext<IDatabaseContext, DatabaseContext>(options =>
             {
                 options.UseSqlServer(connectionString);
+            });
+        }
 
+        private static void ConfigureMappers(IServiceCollection services)
+        {
+            var mapperConfig = new MapperConfiguration(cfg =>
+            {
+                cfg.AddProfile<MapperProfile>();
             });
 
-            services.AddControllers();
+            var mapper = new Mapper(mapperConfig);
+
+            services.AddSingleton<IMapper>(x => mapper);
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
